@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  # Database 1: MongoDB untuk Primary Catalog
+  mongodb:
+    image: mongo:latest
+    container_name: movstream-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # Database 2: Neo4j untuk Recommendation Engine
+  neo4j:
+    image: neo4j:latest
+    container_name: movstream-neo4j
+    ports:
+      - "7474:7474" # Port untuk akses Neo4j Browser (UI)
+      - "7687:7687" # Port Bolt protocol untuk koneksi dari Node.js & Python
+    environment:
+      - NEO4J_AUTH=neo4j/password123
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  mongo_data:
+  neo4j_data:
