@@ -1,56 +1,108 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const neo4j = require('neo4j-driver');
-
 const app = express();
+
 app.use(express.json());
 
-// 1. Koneksi MongoDB
-mongoose.connect('mongodb://localhost:27017/movstream_db')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB Connection Error:', err));
-
-// 2. Koneksi Neo4j
-const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'password123'));
-
-// --- ROUTES ---
-
-// Route: Cek Server Jalan
-app.get('/', (req, res) => {
-  res.send('API MovStream Berhasil Jalan!');
+app.get('/users/register', (req, res) => {
+  res.json({
+    message: 'Register page works'
+  });
 });
 
-// Route: Ambil Data Film (Dari MongoDB)
-app.get('/movies', async (req, res) => {
-  try {
-    const movies = await mongoose.connection.db.collection('movies').find().limit(20).toArray();
-    res.json(movies);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// Login user
+app.get('/users/login', (req, res) => {
+  res.json({
+    message: 'Login page works'
+  });
 });
 
-// Route: Ambil Rekomendasi (Dari Neo4j)
-app.get('/recommend/:showId', async (req, res) => {
-  const session = driver.session();
-  const showId = req.params.showId;
-  try {
-    // Mencari film dengan genre yang sama (Traversal Depth 1)
-    const result = await session.run(
-      `MATCH (m:Movie {id: $id})-[:IN_GENRE]->(g:Genre)<-[:IN_GENRE]-(rec:Movie)
-       RETURN rec.title AS title, g.name AS genre LIMIT 5`,
-      { id: showId }
-    );
-    const recommendations = result.records.map(record => ({
-      title: record.get('title'),
-      genre: record.get('genre')
-    }));
-    res.json(recommendations);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  } finally {
-    await session.close();
-  }
+// Get user profile
+app.get('/users/:id', (req, res) => {
+  res.json({
+    user_id: req.params.id,
+    username: 'felicia',
+    email: 'felicia@ui.ac.id'
+  });
 });
 
-app.listen(3000, () => console.log('Server running on http://localhost:3000'));
+// Follow user
+app.get('/users/:id/follow/:targetId', (req, res) => {
+  res.json({
+    message: `${req.params.id} followed ${req.params.targetId}`
+  });
+});
+
+// Get all movies
+app.get('/movies', (req, res) => {
+  res.json([
+    {
+      movieId: 'm_001',
+      title: 'Dune Part Two'
+    },
+    {
+      movieId: 'm_002',
+      title: 'Interstellar'
+    }
+  ]);
+});
+
+// Get movie by ID
+app.get('/movies/:id', (req, res) => {
+  res.json({
+    movieId: req.params.id,
+    title: 'Dune Part Two'
+  });
+});
+
+// Add movie
+app.get('/movies/add', (req, res) => {
+  res.json({
+    message: 'Movie added successfully'
+  });
+});
+
+// Submit review
+app.get('/reviews/add', (req, res) => {
+  res.json({
+    message: 'Review submitted'
+  });
+});
+
+// Get reviews for a movie
+app.get('/reviews/:movieId', (req, res) => {
+  res.json({
+    movie_id: req.params.movieId,
+    reviews: [
+      {
+        user: 'felicia',
+        rating: 4.5,
+        text: 'Amazing movie'
+      }
+    ]
+  });
+});
+
+// Log watch event
+app.get('/watch/add', (req, res) => {
+  res.json({
+    message: 'Watch log added'
+  });
+});
+
+// Get watch history
+app.get('/watch/:userId', (req, res) => {
+  res.json({
+    user_id: req.params.userId,
+    history: [
+      {
+        movie: 'Dune Part Two',
+        completed: true
+      }
+    ]
+  });
+});
+
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
