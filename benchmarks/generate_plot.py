@@ -10,12 +10,10 @@ if not os.path.exists(file_path):
 
 df = pd.read_csv(file_path)
 
-# Filter hanya untuk metric durasi request
+
 df_duration = df[df['metric_name'] == 'http_req_duration'].copy()
 
-# FUNGSI PENCARIAN LABEL YANG LEBIH KUAT
 def get_db_label(row):
-    # Cek di kolom 'extra_tags', 'url', atau 'name'
     text_to_search = f"{row.get('extra_tags', '')} {row.get('url', '')} {row.get('name', '')}"
     if 'MongoDB' in text_to_search or 'mongo' in text_to_search.lower():
         return 'MongoDB'
@@ -25,7 +23,6 @@ def get_db_label(row):
 
 df_duration['database'] = df_duration.apply(get_db_label, axis=1)
 
-# --- DEBUG: Cetak jumlah data yang ditemukan ke terminal ---
 count_mongo = len(df_duration[df_duration['database'] == 'MongoDB'])
 count_neo = len(df_duration[df_duration['database'] == 'Neo4j'])
 print(f"Data ditemukan -> MongoDB: {count_mongo} baris, Neo4j: {count_neo} baris")
@@ -35,11 +32,9 @@ if count_mongo == 0 and count_neo == 0:
     print("Coba jalankan ulang K6-nya dulu ya.")
     exit()
 
-# Hitung rata-rata latency
 avg_latency = df_duration.groupby('database')['metric_value'].mean()
 avg_latency = avg_latency.reindex(['MongoDB', 'Neo4j']).fillna(0)
 
-# --- Gambar Grafik ---
 plt.figure(figsize=(9, 6))
 colors = ['#47A248', '#018BFF']
 bars = plt.bar(avg_latency.index, avg_latency.values, color=colors)
